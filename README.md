@@ -157,7 +157,7 @@ Healix App/
 
 3. Create a `.env` file in the `backend/` directory:
    ```env
-   PORT=5000
+   PORT=3000
    GROQ_API_KEY=your_groq_api_key_here
    ```
 
@@ -165,7 +165,7 @@ Healix App/
    ```bash
    npm start
    ```
-   *The backend will run on `http://localhost:5000` (or host IP).*
+   *The backend will run on `http://localhost:3000` (or host IP).*
 
 ---
 
@@ -178,7 +178,7 @@ Healix App/
 
 2. Create a `.env` file in the root directory:
    ```env
-   EXPO_PUBLIC_API_URL=http://YOUR_LOCAL_IP:5000
+   EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:3000
    EXPO_PUBLIC_FIREBASE_API_KEY=your_firebase_key
    EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
    EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id

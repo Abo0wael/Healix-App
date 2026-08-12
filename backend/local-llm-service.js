@@ -1,6 +1,6 @@
 /**
- * AI Service using Groq Cloud API
- * Models used: llama-3.1-8b-instant and llama-3.2-11b-vision-preview
+ * Groq Cloud AI Service for Meal Analysis & Drug Alternatives
+ * Models used: llama-3.1-8b-instant and meta-llama/llama-4-scout-17b-16e-instruct
  */
 
 function extractJson(text) {
