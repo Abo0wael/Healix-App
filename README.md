@@ -66,6 +66,37 @@ Healix App
 
 ---
 
+## 📦 Dependencies & Requirements
+
+Detailed package versions and specifications are listed in [requirements.txt](./requirements.txt) and [backend/requirements.txt](./backend/requirements.txt).
+
+### 📱 Frontend Dependencies (Expo / React Native)
+
+| Package | Version | Purpose |
+| :--- | :--- | :--- |
+| `expo` | `~54.0.32` | Core Expo Mobile App Framework |
+| `react` | `19.1.0` | React UI Library |
+| `react-native` | `0.81.5` | Mobile Application Engine |
+| `expo-router` | `~6.0.22` | File-based Routing & Screen Navigation |
+| `firebase` | `^12.8.0` | User Authentication & Cloud Firestore Database |
+| `i18n-js` | `^4.5.1` | Multilingual Support (Arabic & English RTL) |
+| `@react-native-async-storage/async-storage` | `2.2.0` | Local Persistent Data Storage |
+| `expo-notifications` | `~0.32.16` | Medication Reminders & Local Notifications |
+| `expo-av` | `~16.0.8` | Sound Audio Player for Alarm Overlay |
+| `expo-image-picker` | `~17.0.10` | Meal & Report Image Upload Scanner |
+| `react-native-reanimated` | `~4.1.1` | Fluid UI Animations & Transitions |
+
+### ⚙️ Backend Dependencies (Node.js REST API)
+
+| Package | Version | Purpose |
+| :--- | :--- | :--- |
+| `express` | `^4.22.1` | Backend REST API Web Server |
+| `cors` | `^2.8.6` | Cross-Origin Middleware |
+| `dotenv` | `^16.6.1` | Environment Variable Management |
+| `Groq / Grok AI API` | Cloud API | Llama AI Engine for Chatbot, Meal & Vision Report OCR |
+
+---
+
 ## 📁 Repository Structure
 
 ```
