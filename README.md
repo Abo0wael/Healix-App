@@ -91,7 +91,8 @@ Healix App/
 ├── constants/                  # Colors, Design Tokens & Doctor Specialties Data
 ├── lib/                        # Services, Storage, Theme & i18n Configuration
 ├── locales/                    # En & Ar Translation Dictionaries
-└── assets/                     # Sound Effects, App Icons & Splashes
+├── assets/                     # Sound Effects, App Icons & Splashes
+└── requirements.txt            # Project Dependencies & Version Specifications
 ```
 
 ---
