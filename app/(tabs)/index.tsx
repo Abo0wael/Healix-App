@@ -23,6 +23,7 @@ import {
   markDoseAsTaken,
   MedicationReminder,
 } from "../../lib/reminderStorage";
+import { notifyCaregivers } from "../../lib/pushNotifications";
 import { useTheme } from "../../lib/ThemeContext";
 import { useUserProfile } from '../../lib/useUserProfile';
 

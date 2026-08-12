@@ -1,12 +1,17 @@
 import { Tabs, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Text } from "react-native";
 import i18n from "../../lib/i18n";
+import { syncPushToken } from "../../lib/pushNotifications";
 import { useTheme } from "../../lib/ThemeContext";
 
 export default function TabLayout() {
   const router = useRouter();
   const { theme } = useTheme();
 
+  useEffect(() => {
+    syncPushToken();
+  }, []);
   return (
     <Tabs
       screenOptions={{

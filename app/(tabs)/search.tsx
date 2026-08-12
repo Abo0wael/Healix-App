@@ -60,7 +60,26 @@ export default function SearchScreen() {
                     />
                 </View>
 
+                {/* Find a Doctor Button */}
+                <TouchableOpacity
+                    style={[styles.findDoctorBanner, { backgroundColor: theme.primary }]}
+                    onPress={() => router.push('/find-doctor')}
+                    activeOpacity={0.85}
+                >
+                    <View style={styles.findDoctorLeft}>
+                        <View style={styles.findDoctorIconBg}>
+                            <Ionicons name="medical" size={26} color={theme.primary} />
+                        </View>
+                        <View>
+                            <Text style={styles.findDoctorTitle}>Find a Doctor</Text>
+                            <Text style={styles.findDoctorSub}>Browse by specialty & location</Text>
+                        </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.8)" />
+                </TouchableOpacity>
+
                 {/* Specialties Grid */}
+                <Text style={[styles.sectionLabel, { color: theme.text }]}>Browse by Specialty</Text>
                 <View style={styles.grid}>
                     {SPECIALTIES.map((item) => (
                         <TouchableOpacity
@@ -171,5 +190,49 @@ const styles = StyleSheet.create({
     specialtyCount: {
         fontSize: 12,
         color: '#32B5F4',
+    },
+    findDoctorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 16,
+        marginBottom: 24,
+        shadowColor: '#32B5F4',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    findDoctorLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+    },
+    findDoctorIconBg: {
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    findDoctorTitle: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '800',
+        letterSpacing: 0.2,
+    },
+    findDoctorSub: {
+        color: 'rgba(255,255,255,0.75)',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    sectionLabel: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 16,
+        letterSpacing: 0.1,
     },
 });

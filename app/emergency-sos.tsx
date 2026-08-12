@@ -1,12 +1,25 @@
 import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import i18n from "../lib/i18n";
+import { notifyCaregivers } from "../lib/pushNotifications";
 import { useTheme } from "../lib/ThemeContext";
 
 export default function EmergencySOSScreen() {
     const { theme } = useTheme();
-    const handleSOSPress = () => {
+    const handleSOSPress = async () => {
+        // 1. Notify caregivers FIRST and show an alert
+        const success = await notifyCaregivers(
+            "🚨 EMERGENCY SOS 🚨",
+            "A patient has triggered an SOS alert! Please contact them immediately."
+        );
+
+        if (success) {
+            Alert.alert("SOS Sent", "Caregivers have been notified successfully.");
+        } else {
+            Alert.alert("No Caregivers", "Could not notify caregivers. Make sure you have linked your account with a family member and they have opened the app.");
+        }
+
+        // 2. Open phone dialer
         const emergencyNumber = "911";
-        // 'tel' scheme opens the phone dialer with the number pre-filled.
         const url = `tel:${emergencyNumber}`;
 
         Linking.canOpenURL(url)

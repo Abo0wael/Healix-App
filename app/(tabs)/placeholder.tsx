@@ -50,6 +50,14 @@ export default function ServicesScreen() {
             route: "/find-doctor",
         },
         {
+            id: "caregiver",
+            title: i18n.t('service_caregiver') || "Family & Caregivers",
+            icon: "people-circle-outline",
+            color: "#F3E5F5",
+            iconColor: "#7B1FA2",
+            route: "/caregiver-portal",
+        },
+        {
             id: "reminder",
             title: i18n.t('service_reminder'),
             icon: "alarm-outline",
