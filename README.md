@@ -1,6 +1,6 @@
 # Healix App - AI-Powered Smart Healthcare Assistant 🏥✨
 
-**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI**, Healix App provides real-time medical insights, medication safety tracking, report analysis, nutrition scanning, doctor discovery, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
+**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI**, Healix App provides real-time medical insights, medical report analysis, meal nutrition scanning, drug conflict detection, generic alternative finder, doctor discovery, medication reminders, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
 
 ---
 
