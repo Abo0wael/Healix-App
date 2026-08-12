@@ -1,49 +1,52 @@
 # Healix App - AI-Powered Smart Healthcare Assistant 🏥✨
 
-**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI**, Healix App provides real-time medical insights, medical report analysis, meal nutrition scanning, drug conflict detection, generic alternative finder, doctor discovery, medication reminders, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
+**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI** and optional **Local LLM (Ollama)**, Healix App provides real-time medical insights, medical report analysis, meal nutrition scanning, drug conflict detection, generic alternative finder, doctor discovery, medication reminders with audio alarms, family & caregiver portal with real-time push notifications, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
 
 ---
 
 ## 🌟 Key Features
 
 ### 💬 1. Helix AI Medical Assistant
-- Intelligent medical chatbot powered by **Groq / Grok AI** providing instant guidance on health inquiries and symptoms.
-- Context-aware responses with safety disclaimers and medical recommendations.
-- Interactive and localized conversational interface.
+- Intelligent medical chatbot powered by **Groq AI** (with **Ollama / Local LLM** fallback) providing instant guidance on health inquiries and symptoms.
+- Context-aware responses with safety disclaimers and localized medical recommendations.
+- Interactive conversational interface with history tracking.
 
 ### 📋 2. Medical Report & Prescription Scanner
 - Scan or upload lab test results, radiology reports, or doctor prescriptions.
 - Powered by **Groq AI Vision** to extract complex medical terms and provide easy-to-understand explanations.
 - Highlights abnormal indicators and offers actionable health advice.
 
-### 🥗 3. Meal & Nutrition AI Analyzer
+### 👨‍👩‍👧 3. Caregiver & Family Portal
+- Link patient profiles with family members and caregivers for remote health monitoring (`app/caregiver-portal.tsx`).
+- Real-time **Push Notifications** (`lib/pushNotifications.ts`) notifying caregivers instantly when medication doses are marked as taken or missed, or when emergency alerts are triggered.
+
+### 🥗 4. Meal & Nutrition AI Analyzer
 - Take a photo of your meal or upload an image to receive detailed nutritional insights.
 - Calculates estimated calories, macro distribution (carbs, proteins, fats).
 - Tailored nutritional feedback based on individual health goals.
 
-### 💊 4. Drug Conflict & Alternative Finder
+### 💊 5. Drug Conflict & Alternative Finder
 - **Conflict Detection**: Verifies interactions between multiple medications to prevent adverse reactions.
 - **Generic Alternatives**: Finds equivalent and cost-effective active-ingredient substitutes for prescribed drugs.
 - Detailed dosage notes, side-effect warnings, and precautions.
 
-### 👨‍⚕️ 5. Doctor Finder & Appointment Booking
+### 👨‍⚕️ 6. Doctor Finder & Appointment Booking
 - Browse healthcare specialists by category (Cardiology, Dermatology, Pediatrics, Neurology, etc.).
-- Filter by doctor rating, location, and fees.
+- Filter by doctor rating, location, and fees (`app/doctors/list.tsx`, `app/doctors/[id].tsx`).
 - Schedule and manage appointments directly within the app.
 
-### ⏰ 6. Medication Reminders & Alarm Alerts
+### ⏰ 7. Medication Reminders & Interactive Alarm Overlay
 - Schedule daily or custom recurring medication reminders.
-- Custom alarm overlay with audio notifications (`assets/sounds/alarm.wav`) ensuring dosages are never missed.
-- Local notification triggers.
+- **Custom Alarm Overlay** (`components/AlarmOverlay.tsx`) with sound effects (`assets/sounds/alarm.wav` / `alarm.ogg`) ensuring dosages are never missed.
+- Automated caregiver status updates upon dose completion.
 
-### 🚨 7. Emergency SOS
-- Quick emergency trigger for immediate assistance.
-- Pre-configured emergency contacts and one-tap emergency calling.
-- Shares real-time GPS location during emergencies.
+### 🚨 8. Emergency SOS
+- Quick emergency trigger sending instant notifications to linked family caregivers.
+- Direct dialer integration (`911` / local emergency service).
 
-### 🌐 8. Multilingual & Theme Personalization
-- Full **Arabic (العربية)** and **English** localization with Right-to-Left (RTL) layout adaptation (`lib/i18n.ts`).
-- **Dark Mode & Light Mode** seamless context switching (`lib/ThemeContext.tsx`).
+### 🌐 9. Multilingual & Theme Personalization
+- Full **Arabic (العربية)** and **English** localization with Right-to-Left (RTL) layout adaptation (`lib/i18n.ts`, `components/LanguageSwitcher.tsx`).
+- **Dark Mode & Light Mode** seamless context switching (`lib/ThemeContext.tsx`, `components/ThemeSwitcher.tsx`).
 
 ---
 
@@ -52,7 +55,7 @@
 ```
 Healix App
  ├── Frontend (Mobile App - React Native & Expo Router)
- └── Backend API (Node.js & Express - Groq / Grok AI API)
+ └── Backend API (Node.js REST API - Groq AI & Ollama Local LLM)
 ```
 
 | Layer | Technology |
@@ -60,8 +63,9 @@ Healix App
 | **Mobile Frontend** | React Native, Expo (~54.0), TypeScript, Expo Router |
 | **UI & Styling** | Custom Design System, React Native Reanimated, Expo Vector Icons |
 | **Backend Framework** | Node.js, Express.js (ES Modules) |
-| **AI Integration** | **Groq / Grok AI API** (`GROQ_API_KEY` - Llama & Vision Models) |
+| **AI Integration** | **Groq AI API** (Llama & Vision Models) + **Ollama Local LLM** (`backend/local-llm-service.js`) |
 | **Database & Auth** | Firebase Authentication & Firestore (`lib/firebase.ts`) |
+| **Push Notifications** | Expo Push Notification Service (`lib/pushNotifications.ts`) |
 | **Localization & State** | `i18n-js`, React Context API (`ThemeContext`), AsyncStorage |
 
 ---
@@ -81,8 +85,8 @@ Detailed package versions and specifications are listed in [requirements.txt](./
 | `firebase` | `^12.8.0` | User Authentication & Cloud Firestore Database |
 | `i18n-js` | `^4.5.1` | Multilingual Support (Arabic & English RTL) |
 | `@react-native-async-storage/async-storage` | `2.2.0` | Local Persistent Data Storage |
-| `expo-notifications` | `~0.32.16` | Medication Reminders & Local Notifications |
-| `expo-av` | `~16.0.8` | Sound Audio Player for Alarm Overlay |
+| `expo-notifications` | `~0.32.16` | Remote & Local Push Notifications for Medication & Caregivers |
+| `expo-av` | `~16.0.8` | Audio Sound Player for Alarm Overlay |
 | `expo-image-picker` | `~17.0.10` | Meal & Report Image Upload Scanner |
 | `react-native-reanimated` | `~4.1.1` | Fluid UI Animations & Transitions |
 
@@ -93,7 +97,8 @@ Detailed package versions and specifications are listed in [requirements.txt](./
 | `express` | `^4.22.1` | Backend REST API Web Server |
 | `cors` | `^2.8.6` | Cross-Origin Middleware |
 | `dotenv` | `^16.6.1` | Environment Variable Management |
-| `Groq / Grok AI API` | Cloud API | Llama AI Engine for Chatbot, Meal & Vision Report OCR |
+| `Groq AI API` | Cloud API | Llama AI Engine for Chatbot, Meal & Vision Report OCR |
+| `Ollama / Local LLM` | Local | Privacy-focused local LLM integration (`backend/local-llm-service.js`) |
 
 ---
 
@@ -102,10 +107,11 @@ Detailed package versions and specifications are listed in [requirements.txt](./
 ```
 Healix App/
 ├── app/                        # Expo Router Pages & Navigation
-│   ├── (tabs)/                 # Main Bottom Tab Screens (Home, Explore, Search, etc.)
-│   ├── doctors/                # Doctor Listing & Detail Screens
+│   ├── (tabs)/                 # Main Bottom Tab Screens (Home, Explore, Search, Services)
+│   ├── caregiver-portal.tsx    # Family & Caregivers Link Screen
+│   ├── doctors/                # Doctor Listing & Detail Screens (`list.tsx`, `[id].tsx`)
 │   ├── helix-chat.tsx          # Helix AI Chat Screen
-│   ├── medical-report.tsx      # Medical Report Analysis Screen
+│   ├── medical-report.tsx      # Medical Report & Prescription Scanner Screen
 │   ├── meal-analysis.tsx       # AI Nutrition Analyzer Screen
 │   ├── drug-conflict.tsx       # Medication Conflict Detection Screen
 │   ├── drug-alternative.tsx    # Generic Alternatives Screen
@@ -117,12 +123,14 @@ Healix App/
 │   ├── server.js               # Express Server & Route Handlers
 │   ├── ai-service.js           # Groq AI Service & Drug Alias Matching
 │   ├── chat-service.js         # Groq Chatbot Engine Service
-│   └── report-analysis-service.js # Groq Vision Medical Report Service
-├── components/                 # Reusable Components (AlarmOverlay, Switchers, etc.)
+│   ├── report-analysis-service.js # Groq Vision Medical Report Service
+│   └── local-llm-service.js    # Local LLM / Ollama Offline Fallback Service
+├── components/                 # Reusable Components (AlarmOverlay, LanguageSwitcher, ThemeSwitcher)
 ├── constants/                  # Colors, Design Tokens & Doctor Specialties Data
-├── lib/                        # Services, Storage, Theme & i18n Configuration
-├── locales/                    # En & Ar Translation Dictionaries
-├── assets/                     # Sound Effects, App Icons & Splashes
+├── lib/                        # Services, Storage, Push Notifications, Theme & i18n
+├── locales/                    # En & Ar Translation Dictionaries (`en.ts`, `ar.ts`)
+├── assets/                     # Audio Sounds (`alarm.wav`, `alarm.ogg`), Icons & Splashes
+├── eas.json                    # Expo Application Services Build Config
 └── requirements.txt            # Project Dependencies & Version Specifications
 ```
 
