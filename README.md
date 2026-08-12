@@ -1,13 +1,13 @@
 # Healix App - AI-Powered Smart Healthcare Assistant 🏥✨
 
-**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI** and optional **Local LLM (Ollama)**, Healix App provides real-time medical insights, medical report analysis, meal nutrition scanning, drug conflict detection, generic alternative finder, doctor discovery, medication reminders with audio alarms, family & caregiver portal with real-time push notifications, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
+**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered exclusively by **Groq AI**, Healix App provides real-time medical insights, medical report analysis, meal nutrition scanning, drug conflict detection, generic alternative finder, doctor discovery, medication reminders with audio alarms, family & caregiver portal with real-time push notifications, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
 
 ---
 
 ## 🌟 Key Features
 
 ### 💬 1. Helix AI Medical Assistant
-- Intelligent medical chatbot powered by **Groq AI** (with **Ollama / Local LLM** fallback) providing instant guidance on health inquiries and symptoms.
+- Intelligent medical chatbot powered by **Groq AI** providing instant guidance on health inquiries and symptoms.
 - Context-aware responses with safety disclaimers and localized medical recommendations.
 - Interactive conversational interface with history tracking.
 
@@ -21,12 +21,12 @@
 - Real-time **Push Notifications** (`lib/pushNotifications.ts`) notifying caregivers instantly when medication doses are marked as taken or missed, or when emergency alerts are triggered.
 
 ### 🥗 4. Meal & Nutrition AI Analyzer
-- Take a photo of your meal or upload an image to receive detailed nutritional insights.
+- Take a photo of your meal or upload an image to receive detailed nutritional insights via **Groq AI Vision**.
 - Calculates estimated calories, macro distribution (carbs, proteins, fats).
 - Tailored nutritional feedback based on individual health goals.
 
 ### 💊 5. Drug Conflict & Alternative Finder
-- **Conflict Detection**: Verifies interactions between multiple medications to prevent adverse reactions.
+- **Conflict Detection**: Verifies interactions between multiple medications powered by **Groq AI** to prevent adverse reactions.
 - **Generic Alternatives**: Finds equivalent and cost-effective active-ingredient substitutes for prescribed drugs.
 - Detailed dosage notes, side-effect warnings, and precautions.
 
@@ -55,7 +55,7 @@
 ```
 Healix App
  ├── Frontend (Mobile App - React Native & Expo Router)
- └── Backend API (Node.js REST API - Groq AI & Ollama Local LLM)
+ └── Backend API (Node.js REST API - Groq AI API Engine)
 ```
 
 | Layer | Technology |
@@ -63,7 +63,7 @@ Healix App
 | **Mobile Frontend** | React Native, Expo (~54.0), TypeScript, Expo Router |
 | **UI & Styling** | Custom Design System, React Native Reanimated, Expo Vector Icons |
 | **Backend Framework** | Node.js, Express.js (ES Modules) |
-| **AI Integration** | **Groq AI API** (Llama & Vision Models) + **Ollama Local LLM** (`backend/local-llm-service.js`) |
+| **AI Integration** | **Groq AI API Engine** (`GROQ_API_KEY` - Llama-3.3 & Vision Models) |
 | **Database & Auth** | Firebase Authentication & Firestore (`lib/firebase.ts`) |
 | **Push Notifications** | Expo Push Notification Service (`lib/pushNotifications.ts`) |
 | **Localization & State** | `i18n-js`, React Context API (`ThemeContext`), AsyncStorage |
@@ -97,8 +97,7 @@ Detailed package versions and specifications are listed in [requirements.txt](./
 | `express` | `^4.22.1` | Backend REST API Web Server |
 | `cors` | `^2.8.6` | Cross-Origin Middleware |
 | `dotenv` | `^16.6.1` | Environment Variable Management |
-| `Groq AI API` | Cloud API | Llama AI Engine for Chatbot, Meal & Vision Report OCR |
-| `Ollama / Local LLM` | Local | Privacy-focused local LLM integration (`backend/local-llm-service.js`) |
+| `Groq AI API` | Cloud API Engine | Llama-3.3 & Vision Models for Chatbot, Meal Analysis, Drug Conflicts & Report OCR |
 
 ---
 
@@ -121,10 +120,9 @@ Healix App/
 │   └── _layout.tsx             # Root Provider & Navigation Stack
 ├── backend/                    # Node.js Express REST API Backend
 │   ├── server.js               # Express Server & Route Handlers
-│   ├── ai-service.js           # Groq AI Service & Drug Alias Matching
+│   ├── ai-service.js           # Groq AI Service & Drug Interaction Matching
 │   ├── chat-service.js         # Groq Chatbot Engine Service
-│   ├── report-analysis-service.js # Groq Vision Medical Report Service
-│   └── local-llm-service.js    # Local LLM / Ollama Offline Fallback Service
+│   └── report-analysis-service.js # Groq Vision Medical Report Service
 ├── components/                 # Reusable Components (AlarmOverlay, LanguageSwitcher, ThemeSwitcher)
 ├── constants/                  # Colors, Design Tokens & Doctor Specialties Data
 ├── lib/                        # Services, Storage, Push Notifications, Theme & i18n
