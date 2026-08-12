@@ -1,8 +1,10 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import { normalizeDrugName } from './ai-service.js';
-import { getAlternativesFor } from './drug-database.js';
+import { checkDrugConflicts } from './conflict-service.js';
+import { analyzeMealWithOllama, findAlternativesWithOllama } from './local-llm-service.js';
+import { chatWithOllama } from './chat-service.js';
+import { analyzeMedicalReport } from './report-analysis-service.js';
 
 // Load environment variables
 dotenv.config();
@@ -11,146 +13,163 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 console.log("-----------------------------------------");
-console.log("   🚀 SERVER VERSION: 2.0 (Chat API Configured)   ");
+console.log("   🚀 SERVER VERSION: 3.1 (Groq Cloud + Fixed UI)   ");
 console.log("-----------------------------------------");
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });
 });
 
-// Debug endpoint to verify server and env status
-app.get('/debug', (req, res) => {
-    console.log('🔍 /debug endpoint called');
-    res.json({
-        status: 'online',
-        serverTime: new Date().toISOString(),
-        env: {
-            port: process.env.PORT,
-            geminiKeyConfigured: !!process.env.GEMINI_API_KEY,
-            geminiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0
-        },
-        ip: req.ip
-    });
-});
-
-// Drug alternatives endpoint
+// Drug alternatives endpoint (Groq)
 app.post('/ai/drug-alternatives', async (req, res) => {
     const requestId = Date.now();
-    console.log(`\n[${requestId}] 📥 Request received: POST /ai/drug-alternatives`);
-    console.log(`[${requestId}] Body:`, JSON.stringify(req.body));
-
     try {
         const { drug } = req.body;
-
         if (!drug || typeof drug !== 'string') {
-            console.error(`[${requestId}] ❌ Invalid input:`, req.body);
             return res.status(400).json({ error: 'Drug name is required' });
         }
-
-        console.log(`[${requestId}] 🔍 Normalizing drug: "${drug}"`);
-
-        // 1. Normalize the drug name using Gemini
-        let genericName;
-        try {
-            genericName = await normalizeDrugName(drug);
-            console.log(`[${requestId}] 🤖 Normalization Result: "${genericName}"`);
-        } catch (aiError) {
-            console.error(`[${requestId}] ❌ AI Normalization Verification Failed:`);
-            console.error(aiError);
-            throw new Error(`AI Service Error: ${aiError.message}`);
-        }
-
-        if (!genericName) {
-            console.log(`[${requestId}] ❌ Could not identify drug.`);
-            return res.json({
-                success: false,
-                original: drug,
-                message: "Could not identify this drug. Please check the spelling."
-            });
-        }
-
-        // 2. Fetch alternatives from controlled database
-        const allAlternatives = getAlternativesFor(genericName);
-        console.log(`[${requestId}] 📚 Database Lookup for "${genericName}": found ${allAlternatives ? allAlternatives.length : 0} items`);
-
-        if (!allAlternatives) {
-            console.warn(`[${requestId}] ⚠️ No alternatives found in DB`);
-            return res.json({
-                success: false,
-                original: drug,
-                generic: genericName,
-                message: "No safe alternatives found in our database."
-            });
-        }
-
-        // 3. Filter out the requested drug (if input was already a generic)
-        const filteredAlternatives = allAlternatives.filter(
-            alt => alt.name.toLowerCase() !== drug.toLowerCase() &&
-                alt.name.toLowerCase() !== genericName
-        );
-
-        const response = {
+        console.log(`[${requestId}] 🔍 Alternatives for: "${drug}"`);
+        
+        const alternatives = await findAlternativesWithOllama(drug);
+        
+        res.json({
             success: true,
             original: drug,
-            generic: genericName,
-            alternatives: filteredAlternatives.length > 0 ? filteredAlternatives : allAlternatives
-        };
-
-        console.log(`[${requestId}] ✅ Sending success response`);
-        res.json(response);
-
-    } catch (error) {
-        console.error(`[${requestId}] 💥 CRITICAL SERVER ERROR:`);
-        console.error(error);
-
-        // Return explicit error details to frontend for debugging
-        res.status(500).json({
-            error: true,
-            type: error.name,
-            message: error.message,
-            stack: error.stack ? error.stack.split('\n')[0] : 'No stack trace'
+            generic: drug,
+            alternatives: alternatives.alternatives || [],
+            note: "Analysis powered by Groq"
         });
+    } catch (error) {
+        console.error(`[${requestId}] 💥 Alternatives Error:`, error.message);
+        res.status(503).json({ error: true, message: "AI Service unavailable.", details: error.message });
     }
 });
 
-// Conflict Detection Endpoint
-import { checkDrugConflicts } from './conflict-service.js';
-
+// Conflict Detection Endpoint (Groq)
 app.post('/ai/drug-conflict', async (req, res) => {
     const requestId = Date.now();
-    console.log(`\n[${requestId}] ⚔️  Request received: POST /ai/drug-conflict`);
-
     try {
         const { drugs } = req.body;
-
         if (!drugs || !Array.isArray(drugs) || drugs.length < 2) {
             return res.status(400).json({ error: "Please provide at least two drugs." });
         }
-
-        console.log(`[${requestId}] 🔍 Analyzing: ${drugs.join(' + ')}`);
-
+        console.log(`[${requestId}] ⚔️ Analyzing conflicts: ${drugs.join(' + ')}`);
+        
         const result = await checkDrugConflicts(drugs);
-
-        res.json({
-            success: true,
-            data: result
-        });
-
+        
+        res.json({ success: true, data: result });
     } catch (error) {
-        console.error(`[${requestId}] 💥 Conflict Check Failed:`, error);
-        res.status(500).json({
-            success: false,
-            error: error.message || "Failed to analyze conflicts."
-        });
+        console.error(`[${requestId}] 💥 Conflict Check Failed:`, error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// Start server - Listen on all network interfaces
+// PILOT FEATURE: Local AI Drug Interaction (Ollama/Groq)
+// The UI might still hit /ai/drug-interaction from the older screen
+import { analyzeInteractionWithOllama } from './local-llm-service.js';
+app.post('/ai/drug-interaction', async (req, res) => {
+    const requestId = Date.now();
+    try {
+        const { drugs } = req.body;
+        if (!drugs || !Array.isArray(drugs) || drugs.length < 2) {
+            return res.status(400).json({ error: "Please provide at least two drugs." });
+        }
+        const aiResponse = await analyzeInteractionWithOllama(drugs);
+        
+        // Ensure parsing works
+        let status = "UNKNOWN";
+        let reason = aiResponse;
+        
+        if (typeof aiResponse === 'object') {
+            status = aiResponse.status || "UNKNOWN";
+            reason = aiResponse.reason || JSON.stringify(aiResponse);
+        } else {
+            const statusMatch = aiResponse.match(/Status:\s*(.*)/i);
+            const reasonMatch = aiResponse.match(/Reason:\s*(.*)/i);
+            if (statusMatch) status = statusMatch[1].trim().toUpperCase();
+            if (reasonMatch) reason = reasonMatch[1].trim();
+        }
+
+        res.json({
+            success: true,
+            source: "Groq (llama-3.1-8b-instant)",
+            data: {
+                status: status,
+                reason: reason,
+                raw: typeof aiResponse === 'object' ? JSON.stringify(aiResponse) : aiResponse
+            }
+        });
+    } catch (error) {
+        res.status(503).json({ error: true, message: "AI Service unavailable.", details: error.message });
+    }
+});
+
+// Meal Analysis Endpoint (Groq with Vision support)
+app.post('/ai/meal-analysis', async (req, res) => {
+    const requestId = Date.now();
+    try {
+        const { mealName, imageBase64 } = req.body;
+        if (!mealName && !imageBase64) {
+            return res.status(400).json({ error: "Please provide a 'mealName' string or an 'imageBase64' image." });
+        }
+        
+        console.log(`[${requestId}] 🥗 Analyzing meal: "${mealName || "Uploaded Image"}" (Has Image: ${!!imageBase64})`);
+        
+        const analysis = await analyzeMealWithOllama(mealName || "This uploaded meal", imageBase64);
+        
+        res.json({ success: true, data: analysis });
+    } catch (error) {
+        console.error(`[${requestId}] 💥 Meal Analysis Error:`, error.message);
+        res.status(503).json({ error: true, message: "AI Service unavailable.", details: error.message });
+    }
+});
+
+// Helix Chat Endpoint (Groq)
+app.post('/ai/chat', async (req, res) => {
+    const requestId = Date.now();
+    try {
+        const { message, history } = req.body;
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'Message is required' });
+        }
+        
+        console.log(`\n[${requestId}] 🧬 User: "${message}" | History: ${history?.length || 0} messages`);
+        
+        const reply = await chatWithOllama(message, history || []);
+        res.json({ success: true, reply });
+    } catch (error) {
+        console.error(`[${requestId}] 💥 Helix Error:`, error.message);
+        res.status(500).json({ success: false, message: 'AI failed to respond.' });
+    }
+});
+
+// Medical Report Analysis Endpoint (Groq Vision)
+app.post('/ai/report-analysis', async (req, res) => {
+    const requestId = Date.now();
+    try {
+        const { reportText, imageBase64, lang } = req.body;
+
+        if (!reportText && !imageBase64) {
+            return res.status(400).json({ error: 'Please provide reportText or imageBase64.' });
+        }
+
+        console.log(`[${requestId}] 📋 Analyzing medical report (Has Image: ${!!imageBase64}, Has Text: ${!!reportText})`);
+
+        const result = await analyzeMedicalReport(reportText || '', imageBase64 || null, lang || 'en');
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error(`[${requestId}] 💥 Report Analysis Error:`, error.message);
+        res.status(503).json({ success: false, error: error.message });
+    }
+});
+
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Backend server running on:`);
     console.log(`   - Local:   http://localhost:${PORT}`);

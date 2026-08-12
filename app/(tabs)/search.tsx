@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -7,164 +9,74 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SPECIALTY_IDS } from "../../constants/specialties";
+import i18n from "../../lib/i18n";
+import { useTheme } from "../../lib/ThemeContext";
 
-interface Specialty {
-    id: string;
-    name: string;
-    icon: string;
-    specialists: number;
-    color: string;
-    iconBg: string;
-}
+// Data matching the visual reference 'Choose a Specialty'
+const SPECIALTIES = [
+    { id: '1', name: SPECIALTY_IDS.CARDIOLOGY, count: '40 Specialist', icon: 'heart-outline', color: '#E3F2FD' },
+    { id: '2', name: SPECIALTY_IDS.DERMATOLOGY, count: '150 Specialist', icon: 'body-outline', color: '#FFF3E0' },
+    { id: '3', name: SPECIALTY_IDS.MENTAL, count: '100 Specialist', icon: 'happy-outline', color: '#E0F2F1' },
+    { id: '4', name: SPECIALTY_IDS.DENTAL, count: '300 Specialist', icon: 'medkit-outline', color: '#F3E5F5' },
+    { id: '5', name: SPECIALTY_IDS.DIGESTIVE, count: '50 Specialist', icon: 'nutrition-outline', color: '#FFF8E1' },
+    { id: '6', name: SPECIALTY_IDS.ORTHOPEDICS, count: '70 Specialist', icon: 'walk-outline', color: '#FFEBEE' },
+];
 
-export default function FindDoctorsScreen() {
-    const [searchText, setSearchText] = useState("");
+export default function SearchScreen() {
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const { theme } = useTheme();
 
-    const specialties: Specialty[] = [
-        {
-            id: "1",
-            name: "Cardiology",
-            icon: "❤️",
-            specialists: 40,
-            color: "#E3F2FD",
-            iconBg: "#2196F3",
-        },
-        {
-            id: "2",
-            name: "Dermatology",
-            icon: "🖐️",
-            specialists: 140,
-            color: "#FCE4EC",
-            iconBg: "#E91E63",
-        },
-        {
-            id: "3",
-            name: "Mental Wellness",
-            icon: "🧠",
-            specialists: 100,
-            color: "#E0F2F1",
-            iconBg: "#009688",
-        },
-        {
-            id: "4",
-            name: "Dental Care",
-            icon: "🦷",
-            specialists: 300,
-            color: "#F3E5F5",
-            iconBg: "#9C27B0",
-        },
-        {
-            id: "5",
-            name: "Digestive",
-            icon: "🫀",
-            specialists: 50,
-            color: "#FFF8E1",
-            iconBg: "#FFA726",
-        },
-        {
-            id: "6",
-            name: "Orthopedics",
-            icon: "🦴",
-            specialists: 70,
-            color: "#FFEBEE",
-            iconBg: "#EF5350",
-        },
-    ];
-
-    const handleSpecialtyPress = (specialty: Specialty) => {
-        console.log(`Specialty pressed: ${specialty.name}`);
-        // Placeholder for future navigation/logic
-    };
-
-    const handleBackPress = () => {
-        console.log("Back button pressed");
-        // Placeholder for future navigation
-    };
-
-    const handleNotificationPress = () => {
-        console.log("Notification button pressed");
-        // Placeholder for future notification logic
+    const handleSpecialtyPress = (specialtyName: string) => {
+        router.push({
+            pathname: "/doctors/list",
+            params: { specialty: specialtyName }
+        });
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.headerButton}
-                    onPress={handleBackPress}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.backArrow}>←</Text>
+            <View style={[styles.header, { backgroundColor: theme.background }]}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="chevron-back" size={24} color={theme.primary} />
                 </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>Find Doctors</Text>
-
-                <TouchableOpacity
-                    style={styles.headerButton}
-                    onPress={handleNotificationPress}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.notificationIcon}>🔔</Text>
+                <Text style={[styles.headerTitle, { color: theme.primary }]}>Choose a Specialty</Text>
+                <TouchableOpacity style={styles.notificationButton}>
+                    <Ionicons name="notifications-outline" size={24} color={theme.text} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
+            <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Search Bar */}
-                <View style={styles.searchContainer}>
-                    <Text style={styles.searchIcon}>🔍</Text>
+                <View style={[styles.searchContainer, { backgroundColor: theme.primary }]}>
+                    <Ionicons name="search" size={20} color="#fff" style={styles.searchIcon} />
                     <TextInput
+                        placeholder="Search Doctors , Specialities...."
+                        placeholderTextColor="#E1F5FE"
                         style={styles.searchInput}
-                        placeholder="Search doctors, specialties..."
-                        placeholderTextColor="#999"
-                        value={searchText}
-                        onChangeText={setSearchText}
                     />
                 </View>
 
-                {/* Section Header */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Specialties</Text>
-                    <Text style={styles.sectionSubtitle}>
-                        Browse doctors by specialty
-                    </Text>
-                </View>
-
                 {/* Specialties Grid */}
-                <View style={styles.gridContainer}>
-                    {specialties.map((specialty) => (
+                <View style={styles.grid}>
+                    {SPECIALTIES.map((item) => (
                         <TouchableOpacity
-                            key={specialty.id}
-                            style={[styles.specialtyCard, { backgroundColor: specialty.color }]}
-                            onPress={() => handleSpecialtyPress(specialty)}
-                            activeOpacity={0.7}
+                            key={item.id}
+                            style={[styles.card, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}
+                            onPress={() => handleSpecialtyPress(item.name)} // Pass ID
+                            activeOpacity={0.8}
                         >
-                            {/* Icon Container */}
-                            <View
-                                style={[
-                                    styles.iconContainer,
-                                    { backgroundColor: specialty.iconBg },
-                                ]}
-                            >
-                                <Text style={styles.specialtyIcon}>{specialty.icon}</Text>
+                            <View style={[styles.iconCircle, { backgroundColor: item.color === '#E3F2FD' ? theme.surface : item.color }]}>
+                                <Ionicons name={item.icon as any} size={40} color={theme.primary} />
                             </View>
-
-                            {/* Specialty Name */}
-                            <Text style={styles.specialtyName}>{specialty.name}</Text>
-
-                            {/* Specialist Count */}
-                            <Text style={styles.specialistCount}>
-                                {specialty.specialists} Specialist{specialty.specialists !== 1 ? "s" : ""}
-                            </Text>
+                            <Text style={[styles.specialtyName, { color: theme.text }]}>{i18n.t(`specialty.${item.name}`)}</Text>
+                            <Text style={[styles.specialtyCount, { color: theme.primary }]}>{item.count}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
-
-                {/* Bottom Padding for tab bar */}
-                <View style={styles.bottomPadding} />
             </ScrollView>
         </View>
     );
@@ -173,136 +85,91 @@ export default function FindDoctorsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5F9FF",
+        backgroundColor: "#fff",
     },
     header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingTop: 50,
-        paddingBottom: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 20,
-        backgroundColor: "#FFFFFF",
-        borderBottomLeftRadius: 25,
-        borderBottomRightRadius: 25,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 5,
+        paddingBottom: 20,
+        backgroundColor: "#fff"
     },
-    headerButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#F5F9FF",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    backArrow: {
-        fontSize: 24,
-        color: "#32B5F4",
-        fontWeight: "bold",
+    backButton: {
+        padding: 8,
     },
     headerTitle: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#32B5F4",
-        letterSpacing: -0.5,
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#32B5F4',
     },
-    notificationIcon: {
-        fontSize: 22,
+    notificationButton: {
+        padding: 8,
     },
     scrollContent: {
         paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingBottom: 20,
     },
     searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#32B5F4",
+        backgroundColor: '#32B5F4',
         borderRadius: 25,
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        marginBottom: 24,
-        shadowColor: "#32B5F4",
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        marginBottom: 30,
+        shadowColor: '#32B5F4',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
         elevation: 5,
     },
     searchIcon: {
-        fontSize: 20,
         marginRight: 10,
     },
     searchInput: {
         flex: 1,
+        color: '#fff',
         fontSize: 16,
-        color: "#FFFFFF",
-        fontWeight: "500",
     },
-    sectionHeader: {
-        marginBottom: 16,
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
     },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: "800",
-        color: "#1a1a1a",
-        marginBottom: 4,
-        letterSpacing: -0.3,
-    },
-    sectionSubtitle: {
-        fontSize: 14,
-        color: "#666",
-        fontWeight: "400",
-    },
-    gridContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "space-between",
-    },
-    specialtyCard: {
-        width: "48%",
+    card: {
+        width: '48%',
+        backgroundColor: '#fff',
         borderRadius: 20,
         padding: 20,
-        marginBottom: 16,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 4,
+        marginBottom: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#eee',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    iconContainer: {
+    iconCircle: {
         width: 70,
         height: 70,
         borderRadius: 35,
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: 'center',
+        alignItems: 'center',
         marginBottom: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 3,
-    },
-    specialtyIcon: {
-        fontSize: 32,
+        backgroundColor: '#F5F9FF'
     },
     specialtyName: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#1a1a1a",
-        textAlign: "center",
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
         marginBottom: 4,
-        lineHeight: 20,
+        textAlign: 'center',
     },
-    specialistCount: {
+    specialtyCount: {
         fontSize: 12,
-        color: "#32B5F4",
-        fontWeight: "600",
-    },
-    bottomPadding: {
-        height: 30,
+        color: '#32B5F4',
     },
 });

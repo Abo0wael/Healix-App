@@ -17,9 +17,12 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../lib/firebase";
+import i18n from "../lib/i18n";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function Signup() {
   const router = useRouter();
+  const { theme, isDarkMode } = useTheme();
 
   // Form State
   const [email, setEmail] = useState("");
@@ -40,17 +43,17 @@ export default function Signup() {
   const handleSignup = async () => {
     // 1. Basic Validation
     if (!email || !fullName || !age || !phone || !password || !confirmPassword || !gender) {
-      Alert.alert("Missing Information", "Please fill in all fields to continue.");
+      Alert.alert(i18n.t('missing_info'), i18n.t('fill_all_fields'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Password Error", "Passwords do not match.");
+      Alert.alert("Password Error", i18n.t('password_mismatch'));
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Weak Password", "Password must be at least 6 characters long.");
+      Alert.alert("Weak Password", i18n.t('weak_password'));
       return;
     }
 
@@ -72,31 +75,31 @@ export default function Signup() {
       });
 
       // Success
-      Alert.alert("Welcome!", "Your account has been created successfully.", [
-        { text: "Continue to Login", onPress: () => router.replace("/login") }
+      Alert.alert(i18n.t('welcome'), i18n.t('account_created'), [
+        { text: i18n.t('continue_login'), onPress: () => router.replace("/login") }
       ]);
     } catch (error: any) {
       console.error("Signup Error:", error);
       let errorMessage = "An unexpected error occurred.";
 
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This email is already registered.";
+        errorMessage = i18n.t('email_in_use');
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Please enter a valid email address.";
+        errorMessage = i18n.t('invalid_email');
       } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = "Network error. Please check your internet connection.";
+        errorMessage = i18n.t('network_error');
       }
 
-      Alert.alert("Registration Failed", errorMessage);
+      Alert.alert(i18n.t('signup_error'), errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={['#083D5E', '#0A4A72', '#106494']}
+        colors={isDarkMode ? ['#121212', '#1E1E1E', '#2C2C2C'] : ['#083D5E', '#0A4A72', '#106494']}
         style={styles.background}
       />
 
@@ -104,10 +107,10 @@ export default function Signup() {
         {/* Header Section */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={28} color="#fff" />
+            <Ionicons name="arrow-back" size={28} color={isDarkMode ? theme.text : "#fff"} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Account</Text>
-          <Text style={styles.headerSubtitle}>Sign up to get started</Text>
+          <Text style={[styles.headerTitle, isDarkMode && { color: theme.text }]}>{i18n.t('signup_title')}</Text>
+          <Text style={[styles.headerSubtitle, isDarkMode && { color: theme.textSecondary }]}>{i18n.t('signup_subtitle')}</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -118,17 +121,17 @@ export default function Signup() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.formCard}>
+            <View style={[styles.formCard, { backgroundColor: theme.surfaceElevated }]}>
 
               {/* Full Name */}
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Full Name</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person-outline" size={20} color="#083D5E" style={styles.icon} />
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('full_name')}</Text>
+                <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Ionicons name="person-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="e.g. John Doe"
-                    placeholderTextColor="#90A4AE"
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder={i18n.t('name_placeholder')}
+                    placeholderTextColor={theme.textSecondary}
                     value={fullName}
                     onChangeText={setFullName}
                   />
@@ -137,13 +140,13 @@ export default function Signup() {
 
               {/* Email */}
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Email Address</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#083D5E" style={styles.icon} />
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('email_label')}</Text>
+                <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Ionicons name="mail-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="e.g. john@example.com"
-                    placeholderTextColor="#90A4AE"
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder={i18n.t('email_placeholder')}
+                    placeholderTextColor={theme.textSecondary}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -156,13 +159,13 @@ export default function Signup() {
               <View style={styles.row}>
                 {/* Age */}
                 <View style={[styles.inputWrapper, { flex: 0.4, marginRight: 10 }]}>
-                  <Text style={styles.label}>Age</Text>
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="calendar-outline" size={20} color="#083D5E" style={styles.icon} />
+                  <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('age')}</Text>
+                  <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                    <Ionicons name="calendar-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                     <TextInput
-                      style={styles.input}
-                      placeholder="25"
-                      placeholderTextColor="#90A4AE"
+                      style={[styles.input, { color: theme.text }]}
+                      placeholder={i18n.t('age_placeholder')}
+                      placeholderTextColor={theme.textSecondary}
                       value={age}
                       onChangeText={setAge}
                       keyboardType="numeric"
@@ -173,13 +176,13 @@ export default function Signup() {
 
                 {/* Phone */}
                 <View style={[styles.inputWrapper, { flex: 0.6 }]}>
-                  <Text style={styles.label}>Phone Number</Text>
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="call-outline" size={20} color="#083D5E" style={styles.icon} />
+                  <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('phone')}</Text>
+                  <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                    <Ionicons name="call-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                     <TextInput
-                      style={styles.input}
-                      placeholder="+1 234..."
-                      placeholderTextColor="#90A4AE"
+                      style={[styles.input, { color: theme.text }]}
+                      placeholder={i18n.t('phone_placeholder')}
+                      placeholderTextColor={theme.textSecondary}
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
@@ -190,28 +193,28 @@ export default function Signup() {
 
               {/* Gender Dropdown */}
               <View style={[styles.inputWrapper, { zIndex: 100 }]}>
-                <Text style={styles.label}>Gender</Text>
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('gender')}</Text>
                 <TouchableOpacity
-                  style={styles.dropdownContainer}
+                  style={[styles.dropdownContainer, { backgroundColor: theme.background, borderColor: theme.border }]}
                   activeOpacity={0.8}
                   onPress={() => setGenderDropdownOpen(!genderDropdownOpen)}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Ionicons name="people-outline" size={20} color="#083D5E" style={styles.icon} />
-                    <Text style={[styles.inputText, !gender && styles.placeholderText]}>
-                      {gender || "Select Gender"}
+                    <Ionicons name="people-outline" size={20} color={theme.textSecondary} style={styles.icon} />
+                    <Text style={[styles.inputText, { color: theme.text }, !gender && styles.placeholderText]}>
+                      {gender || i18n.t('gender_placeholder')}
                     </Text>
                   </View>
                   <Ionicons
                     name={genderDropdownOpen ? "chevron-up" : "chevron-down"}
                     size={20}
-                    color="#083D5E"
+                    color={theme.textSecondary}
                   />
                 </TouchableOpacity>
 
                 {genderDropdownOpen && (
-                  <View style={styles.dropdownList}>
-                    {["Male", "Female", "Other"].map((item) => (
+                  <View style={[styles.dropdownList, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                    {[i18n.t('gender_male'), i18n.t('gender_female'), i18n.t('gender_other')].map((item) => (
                       <TouchableOpacity
                         key={item}
                         style={styles.dropdownItem}
@@ -222,10 +225,11 @@ export default function Signup() {
                       >
                         <Text style={[
                           styles.dropdownItemText,
-                          gender === item && styles.selectedDropdownItemText
+                          { color: theme.textSecondary },
+                          gender === item && [styles.selectedDropdownItemText, { color: theme.text }]
                         ]}>{item}</Text>
                         {gender === item && (
-                          <Ionicons name="checkmark-circle" size={18} color="#32B5F4" />
+                          <Ionicons name="checkmark-circle" size={18} color={theme.primary} />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -235,60 +239,60 @@ export default function Signup() {
 
               {/* Password */}
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Password</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#083D5E" style={styles.icon} />
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('password_label')}</Text>
+                <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="******"
-                    placeholderTextColor="#90A4AE"
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder={i18n.t('password_placeholder')}
+                    placeholderTextColor={theme.textSecondary}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#083D5E" />
+                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={theme.textSecondary} />
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* Confirm Password */}
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Confirm Password</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#083D5E" style={styles.icon} />
+                <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('confirm_password')}</Text>
+                <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={theme.textSecondary} style={styles.icon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="******"
-                    placeholderTextColor="#90A4AE"
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder={i18n.t('password_placeholder')}
+                    placeholderTextColor={theme.textSecondary}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={!showConfirmPassword}
                   />
                   <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#083D5E" />
+                    <Ionicons name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} size={20} color={theme.textSecondary} />
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* Signup Button */}
               <TouchableOpacity
-                style={styles.button}
+                style={[styles.button, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
                 onPress={handleSignup}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Sign Up</Text>
+                  <Text style={styles.buttonText}>{i18n.t('signup_btn')}</Text>
                 )}
               </TouchableOpacity>
 
               {/* Login Link */}
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text style={[styles.footerText, { color: theme.textSecondary }]}>{i18n.t('already_have_account')} </Text>
                 <TouchableOpacity onPress={() => router.push("/login")}>
-                  <Text style={styles.linkText}>Log In</Text>
+                  <Text style={[styles.linkText, { color: theme.text }]}>{i18n.t('log_in')}</Text>
                 </TouchableOpacity>
               </View>
 

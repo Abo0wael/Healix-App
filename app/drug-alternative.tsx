@@ -9,10 +9,8 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-
-// Backend API configuration
-// Using explicit Network IP as requested
-const API_BASE_URL = "http://192.168.0.149:3000";
+import { BASE_URL, fetchWithTimeout } from "../lib/api";
+import { useTheme } from "../lib/ThemeContext";
 
 interface DrugAlternative {
     name: string;
@@ -33,6 +31,7 @@ export default function DrugAlternativeScreen() {
     const [alternatives, setAlternatives] = useState<DrugAlternative[]>([]);
     const [queriedDrugName, setQueriedDrugName] = useState("");
     const [error, setError] = useState("");
+    const { theme, isDarkMode } = useTheme();
 
     const handleSearch = async () => {
         if (searchText.trim().length === 0) {
@@ -48,9 +47,9 @@ export default function DrugAlternativeScreen() {
 
         try {
             console.log(`🔍 Searching for alternatives to: ${searchText}`);
-            console.log(`📡 Connecting to backend at: ${API_BASE_URL}/ai/drug-alternatives`);
+            console.log(`📡 Connecting to backend at: ${BASE_URL}/ai/drug-alternatives`);
 
-            const response = await fetch(`${API_BASE_URL}/ai/drug-alternatives`, {
+            const response = await fetchWithTimeout(`${BASE_URL}/ai/drug-alternatives`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -87,10 +86,10 @@ export default function DrugAlternativeScreen() {
             console.error("❌ Fetch Error:", err);
 
             // Check for network errors vs API errors
-            const isNetworkError = err.message === 'Failed to fetch' || err.message.includes('Network request failed');
+            const isNetworkError = err.message === 'Server unreachable' || err.message === 'Network request timed out';
 
             if (isNetworkError) {
-                setError(`Network Error: Cannot connect to ${API_BASE_URL}.\nMake sure you are on the same WiFi.`);
+                setError(`Network Error: ${err.message}.\nMake sure you are on the same WiFi and the server is running.`);
             } else {
                 setError(err.message || "Failed to fetch alternatives.");
             }
@@ -114,11 +113,11 @@ export default function DrugAlternativeScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border, shadowColor: isDarkMode ? '#fff' : '#000' }]}>
                 <TouchableOpacity
-                    style={styles.headerButton}
+                    style={[styles.headerButton, { backgroundColor: theme.surfaceElevated }]}
                     onPress={handleBackPress}
                     activeOpacity={0.7}
                 >
@@ -126,12 +125,12 @@ export default function DrugAlternativeScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>Drug Alternative</Text>
-                    <Text style={styles.headerTitle}>Search</Text>
+                    <Text style={[styles.headerTitle, { color: theme.primary }]}>Drug Alternative</Text>
+                    <Text style={[styles.headerTitle, { color: theme.primary }]}>Search</Text>
                 </View>
 
                 <TouchableOpacity
-                    style={styles.headerButton}
+                    style={[styles.headerButton, { backgroundColor: theme.surfaceElevated }]}
                     onPress={handleNotificationPress}
                     activeOpacity={0.7}
                 >
@@ -147,20 +146,20 @@ export default function DrugAlternativeScreen() {
                 <View style={styles.introSection}>
                     {/* Illustration/Icon */}
                     <View style={styles.illustrationContainer}>
-                        <View style={styles.illustrationCircle}>
+                        <View style={[styles.illustrationCircle, { backgroundColor: theme.surface }]}>
                             <Text style={styles.illustrationIcon}>💊</Text>
                             <Text style={styles.illustrationPlus}>➕</Text>
                         </View>
                     </View>
 
                     {/* Subtitle */}
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Find safe and available alternatives in seconds.
                     </Text>
                 </View>
 
                 {/* Search Bar */}
-                <View style={styles.searchContainer}>
+                <View style={[styles.searchContainer, { backgroundColor: theme.primary }]}>
                     <Text style={styles.searchIcon}>🔍</Text>
                     <TextInput
                         style={styles.searchInput}
@@ -182,7 +181,7 @@ export default function DrugAlternativeScreen() {
 
                 {/* Search/Generate Button */}
                 <TouchableOpacity
-                    style={[styles.searchButton, isLoading && styles.searchButtonDisabled]}
+                    style={[styles.searchButton, { backgroundColor: theme.primary, shadowColor: theme.primary }, isLoading && styles.searchButtonDisabled]}
                     onPress={handleSearch}
                     activeOpacity={0.8}
                     disabled={isLoading || searchText.trim().length === 0}
@@ -206,7 +205,7 @@ export default function DrugAlternativeScreen() {
                         <Text style={styles.errorIcon}>⚠️</Text>
                         <Text style={styles.errorText}>{error}</Text>
                         <Text style={styles.errorHint}>
-                            Checking connection to: {API_BASE_URL.replace('http://', '')}
+                            Checking connection to: {BASE_URL.replace('http://', '')}
                         </Text>
                         <Text style={styles.errorHint} numberOfLines={2}>
                             Make sure backend is running and you are on the same WiFi.
@@ -238,12 +237,12 @@ export default function DrugAlternativeScreen() {
 
                 {/* Results List */}
                 {!isLoading && !error && showResults && alternatives.length > 0 && (
-                    <View style={styles.resultsContainer}>
+                    <View style={[styles.resultsContainer, { backgroundColor: theme.surfaceElevated, shadowColor: isDarkMode ? '#fff' : '#000' }]}>
                         {/* Results Header */}
-                        <View style={styles.resultHeaderBox}>
-                            <Text style={styles.resultTitle}>💊 Alternatives for</Text>
-                            <Text style={styles.resultDrugName}>{queriedDrugName}</Text>
-                            <Text style={styles.resultSubtitle}>
+                        <View style={[styles.resultHeaderBox, { borderBottomColor: theme.border }]}>
+                            <Text style={[styles.resultTitle, { color: theme.textSecondary }]}>💊 Alternatives for</Text>
+                            <Text style={[styles.resultDrugName, { color: theme.primary }]}>{queriedDrugName}</Text>
+                            <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
                                 {alternatives.length} option{alternatives.length !== 1 ? 's' : ''} found
                             </Text>
                         </View>
@@ -253,27 +252,25 @@ export default function DrugAlternativeScreen() {
                             {alternatives.map((drug, index) => (
                                 <View
                                     key={index}
-                                    style={[styles.drugCard, {
-                                        animationDelay: `${index * 100}ms`
-                                    }]}
+                                    style={[styles.drugCard, { backgroundColor: theme.background, shadowColor: isDarkMode ? '#fff' : '#000' }]}
                                 >
                                     {/* Left Side: Icon */}
                                     <View style={styles.drugIconContainer}>
-                                        <View style={styles.drugIconCircle}>
+                                        <View style={[styles.drugIconCircle, { backgroundColor: theme.surface }]}>
                                             <Text style={styles.drugIcon}>💊</Text>
                                         </View>
                                     </View>
 
                                     {/* Center: Drug Info */}
                                     <View style={styles.drugInfo}>
-                                        <Text style={styles.drugName}>{drug.name}</Text>
-                                        <View style={styles.doseContainer}>
-                                            <Text style={styles.doseLabel}>💉 Dose:</Text>
-                                            <Text style={styles.drugDosage}>{drug.dose}</Text>
+                                        <Text style={[styles.drugName, { color: theme.text }]}>{drug.name}</Text>
+                                        <View style={[styles.doseContainer, { backgroundColor: theme.surface }]}>
+                                            <Text style={[styles.doseLabel, { color: theme.primary }]}>💉 Dose:</Text>
+                                            <Text style={[styles.drugDosage, { color: theme.primary }]}>{drug.dose}</Text>
                                         </View>
-                                        <View style={styles.reasonContainer}>
+                                        <View style={[styles.reasonContainer, { backgroundColor: theme.surfaceElevated }]}>
                                             <Text style={styles.reasonIcon}>ℹ️</Text>
-                                            <Text style={styles.drugReason}>{drug.reason}</Text>
+                                            <Text style={[styles.drugReason, { color: theme.textSecondary }]}>{drug.reason}</Text>
                                         </View>
                                     </View>
                                 </View>

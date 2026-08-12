@@ -1,17 +1,22 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Text } from "react-native";
+import i18n from "../../lib/i18n";
+import { useTheme } from "../../lib/ThemeContext";
 
 export default function TabLayout() {
+  const router = useRouter();
+  const { theme } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#32B5F4",
-        tabBarInactiveTintColor: "#888",
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: theme.surface,
           borderTopWidth: 1,
-          borderTopColor: "#e0e0e0",
+          borderTopColor: theme.border,
           height: 65,
           paddingBottom: 10,
           paddingTop: 10,
@@ -22,7 +27,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: i18n.t('tab_home'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ fontSize: 28, color: color }}>🏠</Text>
           ),
@@ -31,7 +36,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search",
+          title: i18n.t('tab_search'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ fontSize: 28, color: color }}>🔍</Text>
           ),
@@ -40,16 +45,22 @@ export default function TabLayout() {
       <Tabs.Screen
         name="camera"
         options={{
-          title: "Camera",
+          title: i18n.t('tab_camera'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ fontSize: 32, color: color }}>📷</Text>
           ),
         }}
+        listeners={() => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push("/meal-analysis");
+          },
+        })}
       />
       <Tabs.Screen
         name="placeholder"
         options={{
-          title: "Services",
+          title: i18n.t('tab_services'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ fontSize: 28, color: color }}>🏥</Text>
           ),
@@ -58,7 +69,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Profile",
+          title: i18n.t('tab_profile'),
           tabBarIcon: ({ color, focused }) => (
             <Text style={{ fontSize: 28, color: color }}>👤</Text>
           ),

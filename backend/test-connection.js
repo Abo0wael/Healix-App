@@ -1,7 +1,8 @@
 // Test script to verify frontend-backend connectivity
 // Run with: node test-connection.js
 
-const API_URL = "http://192.168.0.149:3000";
+// Update this URL if testing a deployed server
+const API_URL = process.env.API_URL || "http://localhost:3000";
 
 console.log("🧪 Testing Backend Connection...\n");
 
@@ -29,6 +30,6 @@ console.log(`   Checking if ${API_URL} is reachable...`);
 setTimeout(() => {
     console.log("\n✅ Connection test complete!");
     console.log("\nIf health check passed, your frontend-backend connection is working!");
-    console.log("If you see quota errors in the app, that means the connection is fine,");
-    console.log("but you've hit the Gemini API rate limit. Wait 1-2 minutes and try again.");
+    console.log("If you see AI API errors in the app, that means the connection is fine,");
+    console.log("but there is an issue with your configured AI Provider API.");
 }, 2000);

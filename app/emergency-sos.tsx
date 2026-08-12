@@ -1,13 +1,23 @@
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import i18n from "../lib/i18n";
+import { useTheme } from "../lib/ThemeContext";
 
 export default function EmergencySOSScreen() {
+    const { theme } = useTheme();
     const handleSOSPress = () => {
-        console.log("SOS button pressed");
-        Alert.alert(
-            "Emergency SOS",
-            "SOS feature coming soon. This will contact emergency services.",
-            [{ text: "OK", style: "default" }]
-        );
+        const emergencyNumber = "911";
+        // 'tel' scheme opens the phone dialer with the number pre-filled.
+        const url = `tel:${emergencyNumber}`;
+
+        Linking.canOpenURL(url)
+            .then((supported) => {
+                if (!supported) {
+                    Alert.alert("Error", "Phone dialing is not supported on this device.");
+                } else {
+                    return Linking.openURL(url);
+                }
+            })
+            .catch((err) => console.error("An error occurred", err));
     };
 
     const handleBackPress = () => {
@@ -21,21 +31,21 @@ export default function EmergencySOSScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
                 <TouchableOpacity
-                    style={styles.headerButton}
+                    style={[styles.headerButton, { backgroundColor: theme.surfaceElevated }]}
                     onPress={handleBackPress}
                     activeOpacity={0.7}
                 >
                     <Text style={styles.backArrow}>←</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>Emergency SOS Service</Text>
+                <Text style={[styles.headerTitle, { color: theme.error }]}>{i18n.t('sos_title')}</Text>
 
                 <TouchableOpacity
-                    style={styles.headerButton}
+                    style={[styles.headerButton, { backgroundColor: theme.surfaceElevated }]}
                     onPress={handleNotificationPress}
                     activeOpacity={0.7}
                 >
@@ -51,18 +61,18 @@ export default function EmergencySOSScreen() {
                 </View>
 
                 {/* Info Text */}
-                <Text style={styles.infoTitle}>Emergency Assistance</Text>
-                <Text style={styles.infoText}>
-                    Press the SOS button below in case of emergency.
+                <Text style={[styles.infoTitle, { color: theme.text }]}>{i18n.t('emergency_assistance')}</Text>
+                <Text style={[styles.infoText, { color: theme.textSecondary }]}>
+                    {i18n.t('sos_instruction')}
                 </Text>
-                <Text style={styles.infoSubtext}>
-                    This will alert emergency contacts and services.
+                <Text style={[styles.infoSubtext, { color: theme.textSecondary }]}>
+                    {i18n.t('sos_subtext')}
                 </Text>
 
                 {/* SOS Button */}
                 <View style={styles.sosButtonContainer}>
                     {/* Outer Circle (Light Gray) */}
-                    <View style={styles.sosOuterCircle}>
+                    <View style={[styles.sosOuterCircle, { backgroundColor: theme.surface }]}>
                         {/* Red SOS Button */}
                         <TouchableOpacity
                             style={styles.sosButton}
@@ -75,10 +85,10 @@ export default function EmergencySOSScreen() {
                 </View>
 
                 {/* Bottom Info */}
-                <View style={styles.bottomInfo}>
+                <View style={[styles.bottomInfo, { backgroundColor: theme.surfaceElevated, borderColor: theme.border, borderWidth: 1 }]}>
                     <Text style={styles.bottomInfoIcon}>📞</Text>
-                    <Text style={styles.bottomInfoText}>
-                        For immediate assistance, call emergency services
+                    <Text style={[styles.bottomInfoText, { color: theme.textSecondary }]}>
+                        {i18n.t('immediate_assistance')}
                     </Text>
                 </View>
             </View>

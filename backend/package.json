@@ -1,7 +1,7 @@
 {
-    "name": "figma-app-backend",
+    "name": "healix-backend",
     "version": "1.0.0",
-    "description": "Simple backend API for Gemini Pro drug alternatives",
+    "description": "Healix Smart Healthcare Assistant Backend API",
     "main": "server.js",
     "type": "module",
     "scripts": {
@@ -9,7 +9,6 @@
         "dev": "node --watch server.js"
     },
     "dependencies": {
-        "@google/generative-ai": "^0.24.1",
         "cors": "^2.8.6",
         "dotenv": "^16.6.1",
         "express": "^4.22.1"

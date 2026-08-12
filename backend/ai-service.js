@@ -1,19 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-if (!GEMINI_API_KEY) {
-    console.error("❌ Error: GEMINI_API_KEY is missing in .env");
-}
-
-// Initialize the Google Generative AI SDK
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || 'MISSING_KEY');
-// Using gemini-1.5-flash as it is the standard.
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Manual Alias Map for Hackathon Reliability
 // Covers International & Common Regional Brands (Egypt/MENA)
@@ -236,9 +224,8 @@ const DRUG_ALIASES = {
 /**
  * Normalizes a drug name to its standard generic name.
  * Priority:
- * 1. AI Normalization (Gemini)
- * 2. Manual Alias Map
- * 3. Raw Input Fallback
+ * 1. Manual Alias Map
+ * 2. Raw Input Fallback
  */
 export async function normalizeDrugName(rawDrugName) {
     const cleanName = rawDrugName.trim().toLowerCase();
@@ -249,36 +236,8 @@ export async function normalizeDrugName(rawDrugName) {
         return DRUG_ALIASES[cleanName];
     }
 
-    if (!GEMINI_API_KEY) {
-        console.warn("⚠️ GEMINI_API_KEY missing. Using fallback.");
-        return cleanName;
-    }
-
-    const prompt = `Task: Identify the standard GENERIC name for "${rawDrugName}". Output ONLY the name.`;
-
-    try {
-        console.log(`[AI-Service] 📡 Asking Gemini to normalize: "${rawDrugName}"...`);
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        if (!text) throw new Error("Empty AI response");
-
-        const normalizedName = text.trim().toLowerCase();
-
-        // Safety check to ensure valid response
-        if (normalizedName.split(' ').length > 3) throw new Error("Verbose response");
-
-        console.log(`[AI-Service] ✅ Normalized: "${rawDrugName}" -> "${normalizedName}"`);
-        return normalizedName;
-
-    } catch (error) {
-        console.error(`[AI-Service] ⚠️ AI Failed (${error.message}). Checking alias map...`);
-
-        // Final Fallback: Check alias map again or return raw
-        const fallback = DRUG_ALIASES[cleanName] || cleanName;
-        console.log(`[AI-Service] ↪️  Fallback: "${fallback}"`);
-        return fallback;
-    }
+    // Final Fallback: Check alias map again or return raw
+    const fallback = DRUG_ALIASES[cleanName] || cleanName;
+    console.log(`[AI-Service] ↪️  Fallback: "${fallback}"`);
+    return fallback;
 }

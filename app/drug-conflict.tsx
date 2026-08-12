@@ -13,46 +13,28 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BASE_URL, fetchWithTimeout } from "../lib/api";
+import i18n from "../lib/i18n";
+import { useTheme } from "../lib/ThemeContext";
 
-// Backend URI - matching your existing setup
-// Ensure this matches your local IP if running on device
-const API_URL = "http://192.168.0.149:3000";
-
-interface ConflictResult {
-    interaction_level: "Safe" | "Caution" | "Dangerous" | "Unknown";
+interface InteractionResult {
+    status: "SAFE" | "CAUTION" | "CONTRAINDICATED" | "UNKNOWN";
     reason: string;
-    recommendation: string;
 }
 
-export default function DrugConflictScreen() {
-    const [drugs, setDrugs] = useState<string[]>([]);
-    const [currentDrug, setCurrentDrug] = useState("");
+export default function DrugInteractionScreen() {
+    const [drug1, setDrug1] = useState("");
+    const [drug2, setDrug2] = useState("");
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<ConflictResult | null>(null);
+    const [result, setResult] = useState<InteractionResult | null>(null);
+    const { theme, isDarkMode } = useTheme();
 
-    const addDrug = () => {
-        if (!currentDrug.trim()) return;
-
-        if (drugs.includes(currentDrug.trim())) {
-            Alert.alert("Duplicate", "This drug is already in the list.");
-            return;
-        }
-
-        setDrugs([...drugs, currentDrug.trim()]);
-        setCurrentDrug("");
-    };
-
-    const removeDrug = (index: number) => {
-        const updated = [...drugs];
-        updated.splice(index, 1);
-        setDrugs(updated);
-        // Reset result if list changes to force re-check
-        setResult(null);
-    };
-
-    const checkConflicts = async () => {
-        if (drugs.length < 2) {
-            Alert.alert("Error", "Please add at least two drugs to check.");
+    const checkInteraction = async () => {
+        if (!drug1.trim() || !drug2.trim()) {
+            if (!drug1.trim() || !drug2.trim()) {
+                Alert.alert(i18n.t('input_error'), i18n.t('enter_both_drugs'));
+                return;
+            }
             return;
         }
 
@@ -61,18 +43,16 @@ export default function DrugConflictScreen() {
         Keyboard.dismiss();
 
         try {
-            // Replace localhost/IP with your machine's IP if testing on device!
-            // Using generic localhost for simulator or configured IP
-            const endpoint = `${API_URL}/ai/drug-conflict`;
+            console.log("Creating request to:", `${BASE_URL}/ai/drug-interaction`);
 
-            console.log("Sending request to:", endpoint);
-
-            const response = await fetch(endpoint, {
+            const response = await fetchWithTimeout(`${BASE_URL}/ai/drug-interaction`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ drugs }),
+                body: JSON.stringify({
+                    drugs: [drug1.trim(), drug2.trim()]
+                }),
             });
 
             const data = await response.json();
@@ -80,20 +60,42 @@ export default function DrugConflictScreen() {
             if (data.success && data.data) {
                 setResult(data.data);
             } else {
-                Alert.alert("Error", data.error || "Failed to analyze conflicts.");
+                Alert.alert("Error", data.error || "Failed to analyze interaction.");
             }
+
         } catch (error) {
-            console.error(error);
-            Alert.alert("Network Error", "Could not connect to the backend server. Make sure it's running.");
+            console.error("Interaction check failed:", error);
+            Alert.alert(
+                "Connection Error",
+                error instanceof Error ? error.message : `Could not connect to ${BASE_URL}. Ensure the server is running and accessible.`
+            );
         } finally {
             setLoading(false);
         }
     };
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'SAFE': return '#4CAF50'; // Green
+            case 'CAUTION': return '#FF9800'; // Orange
+            case 'CONTRAINDICATED': return '#F44336'; // Red
+            default: return '#9E9E9E'; // Grey
+        }
+    };
+
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'SAFE': return 'checkmark-circle';
+            case 'CAUTION': return 'warning';
+            case 'CONTRAINDICATED': return 'alert-circle';
+            default: return 'help-circle';
+        }
+    };
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <LinearGradient
-                colors={['#083D5E', '#062E46']}
+                colors={isDarkMode ? ['#121212', '#1E1E1E'] : ['#083D5E', '#062E46']}
                 style={styles.background}
             />
 
@@ -101,91 +103,73 @@ export default function DrugConflictScreen() {
                 <ScrollView contentContainerStyle={styles.content}>
 
                     <View style={styles.header}>
-                        <Ionicons name="flask-outline" size={40} color="#32B5F4" style={{ marginBottom: 10 }} />
-                        <Text style={styles.title}>Drug Conflict Detection</Text>
+                        <Ionicons name="git-merge-outline" size={44} color={isDarkMode ? theme.primary : "#32B5F4"} style={{ marginBottom: 10 }} />
+                        <Text style={[styles.title, { color: isDarkMode ? theme.text : '#fff' }]}>{i18n.t('conflict_title')}</Text>
                         <Text style={styles.subtitle}>
-                            AI-powered interaction checker for safer medication management.
+                            {i18n.t('conflict_subtitle')}
                         </Text>
                     </View>
 
-                    {/* Input Section */}
-                    <View style={styles.card}>
-                        <Text style={styles.label}>Add Medications:</Text>
-
-                        <View style={styles.inputRow}>
+                    {/* Input Card */}
+                    <View style={[styles.card, { backgroundColor: theme.surfaceElevated }]}>
+                        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('first_drug')}</Text>
+                        <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                            <Ionicons name="medkit-outline" size={20} color={theme.textSecondary} style={styles.inputIcon} />
                             <TextInput
-                                style={styles.input}
-                                placeholder="Enter drug name (e.g. Aspirin)"
-                                placeholderTextColor="#90A4AE"
-                                value={currentDrug}
-                                onChangeText={setCurrentDrug}
-                                onSubmitEditing={addDrug}
+                                style={[styles.input, { color: theme.text }]}
+                                placeholder={i18n.t('drug1_placeholder')}
+                                placeholderTextColor={theme.textSecondary}
+                                value={drug1}
+                                onChangeText={setDrug1}
                             />
-                            <TouchableOpacity style={styles.addButton} onPress={addDrug}>
-                                <Ionicons name="add" size={24} color="#fff" />
-                            </TouchableOpacity>
                         </View>
 
-                        {/* Drug List */}
-                        <View style={styles.chipContainer}>
-                            {drugs.map((drug, index) => (
-                                <View key={index} style={styles.chip}>
-                                    <Text style={styles.chipText}>{drug}</Text>
-                                    <TouchableOpacity onPress={() => removeDrug(index)}>
-                                        <Ionicons name="close-circle" size={20} color="#fff" style={{ marginLeft: 5, opacity: 0.8 }} />
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
-                            {drugs.length === 0 && (
-                                <Text style={styles.emptyText}>No drugs added yet.</Text>
-                            )}
+                        <Text style={[styles.label, { color: theme.textSecondary }]}>{i18n.t('second_drug')}</Text>
+                        <View style={[styles.inputContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                            <Ionicons name="medkit-outline" size={20} color={theme.textSecondary} style={styles.inputIcon} />
+                            <TextInput
+                                style={[styles.input, { color: theme.text }]}
+                                placeholder={i18n.t('drug2_placeholder')}
+                                placeholderTextColor={theme.textSecondary}
+                                value={drug2}
+                                onChangeText={setDrug2}
+                            />
                         </View>
 
-                        {/* Action Button */}
                         <TouchableOpacity
                             style={[
                                 styles.analyzeButton,
-                                (drugs.length < 2 || loading) && styles.disabledButton
+                                { backgroundColor: theme.primary, shadowColor: theme.primary },
+                                (loading || !drug1 || !drug2) && styles.disabledButton
                             ]}
-                            onPress={checkConflicts}
-                            disabled={drugs.length < 2 || loading}
+                            onPress={checkInteraction}
+                            disabled={loading || !drug1 || !drug2}
                         >
                             {loading ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
                                 <>
-                                    <Ionicons name="scan-circle-outline" size={24} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={styles.buttonText}>Check Interactions</Text>
+                                    <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.buttonText}>{i18n.t('check_interaction')}</Text>
                                 </>
                             )}
                         </TouchableOpacity>
                     </View>
 
-                    {/* Result Section */}
+                    {/* Results Card */}
                     {result && (
-                        <View style={[styles.resultCard, { borderLeftColor: result.interaction_level === 'Safe' ? '#4CAF50' : result.interaction_level === 'Caution' ? '#FFC107' : result.interaction_level === 'Dangerous' ? '#F44336' : '#9E9E9E' }]}>
-                            <View style={[styles.statusBadge, { backgroundColor: result.interaction_level === 'Safe' ? '#4CAF50' : result.interaction_level === 'Caution' ? '#FFC107' : result.interaction_level === 'Dangerous' ? '#F44336' : '#9E9E9E' }]}>
-                                <Ionicons name={result.interaction_level === 'Safe' ? "checkmark-circle" : result.interaction_level === 'Caution' ? "warning" : "alert-circle"} size={18} color="#fff" />
-                                <Text style={styles.statusText}>{result.interaction_level.toUpperCase()}</Text>
+                        <View style={[styles.resultCard, { borderLeftColor: getStatusColor(result.status), backgroundColor: theme.surfaceElevated }]}>
+                            <View style={[styles.statusHeader, { backgroundColor: getStatusColor(result.status) }]}>
+                                <Ionicons name={getStatusIcon(result.status) as any} size={24} color="#fff" />
+                                <Text style={styles.statusText}>{result.status}</Text>
                             </View>
 
-                            <View style={styles.resultContent}>
-                                <Text style={styles.resultLabel}>Analysis:</Text>
-                                <Text style={styles.resultValue}>{result.reason}</Text>
-
-                                <View style={styles.divider} />
-
-                                <Text style={styles.resultLabel}>Recommendation:</Text>
-                                <Text style={styles.resultValue}>{result.recommendation}</Text>
+                            <View style={styles.resultBody}>
+                                <Text style={[styles.reasonLabel, { color: theme.textSecondary }]}>{i18n.t('analysis_result')}</Text>
+                                <Text style={[styles.reasonText, { color: theme.text }]}>{result.reason}</Text>
                             </View>
                         </View>
                     )}
-
-                    {/* Disclaimer */}
-                    <Text style={styles.disclaimer}>
-                        ⚠️ DISCLAIMER: This feature uses AI for educational purposes only.
-                        It does NOT replace professional medical advice. Always consult your doctor or pharmacist.
-                    </Text>
 
                 </ScrollView>
             </SafeAreaView>
@@ -209,16 +193,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        padding: 20,
-        paddingBottom: 40,
+        padding: 24,
     },
     header: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 32,
         marginTop: 10,
     },
     title: {
-        fontSize: 26,
+        fontSize: 24,
         fontWeight: 'bold',
         color: '#fff',
         textAlign: 'center',
@@ -228,149 +211,110 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#B0BEC5',
         textAlign: 'center',
-        paddingHorizontal: 20,
+        maxWidth: '80%',
         lineHeight: 20,
     },
     card: {
         backgroundColor: '#fff',
         borderRadius: 20,
-        padding: 20,
-        marginBottom: 20,
+        padding: 24,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+        marginBottom: 24,
     },
     label: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
-        color: '#37474F',
-        marginBottom: 12,
+        color: '#455A64',
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    inputRow: {
+    inputContainer: {
         flexDirection: 'row',
-        marginBottom: 15,
+        alignItems: 'center',
+        backgroundColor: '#F5F7F9',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E0E6EB',
+        marginBottom: 20,
+        height: 56,
+        paddingHorizontal: 16,
+    },
+    inputIcon: {
+        marginRight: 12,
     },
     input: {
         flex: 1,
-        backgroundColor: '#F5F7F9',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        height: 50,
         fontSize: 16,
         color: '#263238',
-        borderWidth: 1,
-        borderColor: '#E0E6EB',
-        marginRight: 10,
-    },
-    addButton: {
-        width: 50,
-        height: 50,
-        backgroundColor: '#32B5F4',
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: "#32B5F4",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    chipContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 20,
-        minHeight: 40,
-    },
-    chip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#0A4A72',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-    },
-    chipText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    emptyText: {
-        color: '#90A4AE',
-        fontStyle: 'italic',
-        paddingTop: 8,
+        height: '100%',
     },
     analyzeButton: {
         backgroundColor: '#083D5E',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
+        height: 56,
         borderRadius: 16,
-        marginTop: 10,
+        marginTop: 8,
+        shadowColor: "#083D5E",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
     },
     disabledButton: {
-        backgroundColor: '#B0BEC5',
-        opacity: 0.8,
+        backgroundColor: '#CFD8DC',
+        shadowOpacity: 0,
+        elevation: 0,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
+        letterSpacing: 0.5,
     },
     resultCard: {
         backgroundColor: '#fff',
         borderRadius: 16,
         overflow: 'hidden',
         borderLeftWidth: 6,
-        marginBottom: 20,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 3,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    statusBadge: {
+    statusHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
     },
     statusText: {
         color: '#fff',
+        fontSize: 18,
         fontWeight: 'bold',
-        fontSize: 14,
-        marginLeft: 6,
+        marginLeft: 10,
         letterSpacing: 1,
     },
-    resultContent: {
-        padding: 20,
+    resultBody: {
+        padding: 24,
     },
-    resultLabel: {
-        fontSize: 14,
-        color: '#78909C',
-        fontWeight: '600',
-        marginBottom: 4,
-        textTransform: 'uppercase',
-    },
-    resultValue: {
-        fontSize: 16,
-        color: '#263238',
-        lineHeight: 24,
-        marginBottom: 15,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#ECEFF1',
-        marginVertical: 10,
-    },
-    disclaimer: {
-        color: 'rgba(255,255,255,0.6)',
+    reasonLabel: {
         fontSize: 12,
-        textAlign: 'center',
-        marginTop: 10,
-        lineHeight: 18,
+        color: '#90A4AE',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginBottom: 8,
+    },
+    reasonText: {
+        fontSize: 16,
+        color: '#37474F',
+        lineHeight: 24,
     },
 });

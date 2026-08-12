@@ -1,7 +1,8 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,55 +11,26 @@ import {
 } from "react-native";
 
 import { useFocusEffect } from "@react-navigation/native";
-import { doc, getDoc } from "firebase/firestore";
-import { useCallback } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+
+import LanguageSwitcher from "../../components/LanguageSwitcher";
+import ThemeSwitcher from "../../components/ThemeSwitcher";
 import { auth, db } from "../../lib/firebase";
+import i18n from "../../lib/i18n";
 import {
+  deleteReminder,
   getActiveReminders,
   markDoseAsTaken,
   MedicationReminder,
 } from "../../lib/reminderStorage";
+import { useTheme } from "../../lib/ThemeContext";
+import { useUserProfile } from '../../lib/useUserProfile';
 
 export default function TabsHome() {
-  const [userName, setUserName] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { name, loading } = useUserProfile();
+  const [isUpdating, setIsUpdating] = useState(false);
   const [reminders, setReminders] = useState<MedicationReminder[]>([]);
-
-  // 🔥 Fetch user data from Firestore
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        const currentUser = auth.currentUser;
-
-        if (!currentUser) {
-          console.log("No user logged in");
-          setLoading(false);
-          return;
-        }
-
-        console.log("Fetching user data for:", currentUser.uid);
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          console.log("User data:", userData);
-          if (userData?.fullName) {
-            setUserName(userData.fullName);
-          }
-        } else {
-          console.log("User document does not exist");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  const { theme } = useTheme();
 
   // Load reminders
   const loadReminders = async () => {
@@ -66,7 +38,7 @@ export default function TabsHome() {
       const activeReminders = await getActiveReminders();
       setReminders(activeReminders);
     } catch (error) {
-      console.error("Error loading reminders:", error);
+      console.log("Error loading reminders:", error);
     }
   };
 
@@ -91,6 +63,31 @@ export default function TabsHome() {
     }
   };
 
+  const handleDeleteReminder = (reminder: MedicationReminder) => {
+    Alert.alert(
+      i18n.t('delete_reminder'),
+      i18n.t('delete_confirmation'),
+      [
+        { text: i18n.t('cancel'), style: "cancel" },
+        {
+          text: i18n.t('delete'),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsUpdating(true);
+              await deleteReminder(reminder.id);
+              await loadReminders();
+            } catch (error) {
+              Alert.alert(i18n.t('error'), i18n.t('delete_error'));
+            } finally {
+              setIsUpdating(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getNextDoseTime = (reminder: MedicationReminder): string => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now
@@ -109,7 +106,7 @@ export default function TabsHome() {
     }
 
     // If all today's doses are done, return first dose tomorrow
-    return reminder.doseTimes[0] + " (Tomorrow)";
+    return reminder.doseTimes[0] + i18n.t('tomorrow');
   };
 
   const isDoseTaken = (reminder: MedicationReminder, time: string): boolean => {
@@ -118,34 +115,40 @@ export default function TabsHome() {
     return takenToday.includes(time);
   };
 
-  if (loading) {
+  if (loading || isUpdating) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#32B5F4" />
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{i18n.t('loading')}</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       {/* Greeting Section */}
       <View style={styles.topSection}>
-        <View style={styles.greetingCard}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 10 }}>
+          <LanguageSwitcher />
+          <ThemeSwitcher />
+        </View>
+        <View style={[styles.greetingCard, { backgroundColor: theme.surfaceElevated }]}>
           <View style={styles.greetingRow}>
-            <Text style={styles.greeting}>Hi, {userName || "there"}</Text>
-            <Text style={styles.waveEmoji}>👋</Text>
+            <Text style={[styles.greeting, { color: theme.text }]}>
+              {/* Force simple greeting as strictly mandated by user rules */}
+              Hi, {name || "User"} 👋
+            </Text>
           </View>
-          <Text style={styles.subtitle}>How are you feeling today?</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{i18n.t('how_are_you')}</Text>
         </View>
 
         {/* Health Tip Card */}
-        <View style={styles.healthTipCard}>
+        <View style={[styles.healthTipCard, { backgroundColor: theme.surface, borderLeftColor: theme.primary }]}>
           <Text style={styles.tipEmoji}>💊</Text>
           <View style={styles.tipTextContainer}>
-            <Text style={styles.tipTitle}>Stay on track</Text>
-            <Text style={styles.tipSubtitle}>
-              Set reminders for your medications
+            <Text style={[styles.tipTitle, { color: theme.text }]}>{i18n.t('stay_on_track')}</Text>
+            <Text style={[styles.tipSubtitle, { color: theme.textSecondary }]}>
+              {i18n.t('set_reminders')}
             </Text>
           </View>
         </View>
@@ -154,30 +157,36 @@ export default function TabsHome() {
       {/* Reminders Section */}
       {reminders.length > 0 ? (
         <View style={styles.remindersSection}>
-          <Text style={styles.remindersSectionTitle}>Your Medications</Text>
+          <Text style={[styles.remindersSectionTitle, { color: theme.text }]}>{i18n.t('your_medications')}</Text>
 
           {reminders.map((reminder) => (
-            <View key={reminder.id} style={styles.reminderCard}>
+            <View key={reminder.id} style={[styles.reminderCard, { backgroundColor: theme.surfaceElevated }]}>
               {/* Reminder Header */}
               <View style={styles.reminderHeader}>
-                <View style={styles.reminderIcon}>
+                <View style={[styles.reminderIcon, { backgroundColor: theme.surface }]}>
                   <Text style={styles.reminderIconText}>💊</Text>
                 </View>
                 <View style={styles.reminderHeaderText}>
-                  <Text style={styles.reminderName}>
+                  <Text style={[styles.reminderName, { color: theme.text }]}>
                     {reminder.medicationName}
                   </Text>
-                  <Text style={styles.reminderDose}>{reminder.dose}</Text>
-                  <Text style={styles.reminderFrequency}>
-                    {reminder.timesPerDay} time{reminder.timesPerDay !== 1 ? "s" : ""} daily
+                  <Text style={[styles.reminderDose, { color: theme.textSecondary }]}>{reminder.dose}</Text>
+                  <Text style={[styles.reminderFrequency, { color: theme.primary }]}>
+                    {i18n.t(reminder.timesPerDay !== 1 ? 'daily_times' : 'daily_time', { count: reminder.timesPerDay })}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => handleDeleteReminder(reminder)}
+                  style={styles.deleteButton}
+                >
+                  <Text>🗑️</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Next Dose */}
-              <View style={styles.nextDoseContainer}>
-                <Text style={styles.nextDoseLabel}>Next dose:</Text>
-                <Text style={styles.nextDoseTime}>
+              <View style={[styles.nextDoseContainer, { backgroundColor: theme.warningBackground }]}>
+                <Text style={[styles.nextDoseLabel, { color: theme.textSecondary }]}>{i18n.t('next_dose')}</Text>
+                <Text style={[styles.nextDoseTime, { color: theme.warningText }]}>
                   {getNextDoseTime(reminder)}
                 </Text>
               </View>
@@ -189,7 +198,8 @@ export default function TabsHome() {
                     key={time}
                     style={[
                       styles.doseTimeChip,
-                      isDoseTaken(reminder, time) && styles.doseTimeChipTaken,
+                      { backgroundColor: theme.surface, borderColor: theme.border },
+                      isDoseTaken(reminder, time) && { backgroundColor: theme.successBackground, borderColor: theme.successBorder },
                     ]}
                     onPress={() => handleMarkAsTaken(reminder, time)}
                     activeOpacity={0.7}
@@ -197,23 +207,24 @@ export default function TabsHome() {
                     <Text
                       style={[
                         styles.doseTimeText,
-                        isDoseTaken(reminder, time) && styles.doseTimeTextTaken,
+                        { color: theme.textSecondary },
+                        isDoseTaken(reminder, time) && { color: theme.success },
                       ]}
                     >
                       {time}
                     </Text>
                     {isDoseTaken(reminder, time) && (
-                      <Text style={styles.checkmark}>✓</Text>
+                      <Text style={[styles.checkmark, { color: theme.success }]}>✓</Text>
                     )}
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* Warning (Optional) */}
-              <View style={styles.warningContainer}>
+              <View style={[styles.warningContainer, { backgroundColor: theme.warningBackground }]}>
                 <Text style={styles.warningIcon}>⚠️</Text>
-                <Text style={styles.warningText}>
-                  Take with food. Avoid alcohol.
+                <Text style={[styles.warningText, { color: theme.textSecondary }]}>
+                  {i18n.t('warning_msg')}
                 </Text>
               </View>
             </View>
@@ -223,30 +234,30 @@ export default function TabsHome() {
         /* Add Reminder Button - when no reminders */
         <View style={styles.centerSection}>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
             onPress={handleAddReminder}
             activeOpacity={0.8}
           >
             <Text style={styles.addButtonIcon}>⏰</Text>
-            <Text style={styles.addButtonText}>Add Reminder</Text>
+            <Text style={styles.addButtonText}>{i18n.t('add_reminder')}</Text>
           </TouchableOpacity>
 
           {/* Quick Stats */}
           <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surfaceElevated }]}>
               <Text style={styles.statEmoji}>✅</Text>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Taken</Text>
+              <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{i18n.t('stat_taken')}</Text>
             </View>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surfaceElevated }]}>
               <Text style={styles.statEmoji}>⏳</Text>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Pending</Text>
+              <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{i18n.t('stat_pending')}</Text>
             </View>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surfaceElevated }]}>
               <Text style={styles.statEmoji}>📋</Text>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{i18n.t('stat_total')}</Text>
             </View>
           </View>
         </View>
@@ -261,18 +272,15 @@ export default function TabsHome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F9FF",
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#F5F9FF",
     justifyContent: "center",
     alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: "#666",
     fontWeight: "500",
   },
   topSection: {
@@ -441,6 +449,9 @@ const styles = StyleSheet.create({
   },
   reminderHeaderText: {
     flex: 1,
+  },
+  deleteButton: {
+    padding: 8,
   },
   reminderName: {
     fontSize: 18,
