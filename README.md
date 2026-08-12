@@ -1,19 +1,19 @@
 # Healix App - AI-Powered Smart Healthcare Assistant 🏥✨
 
-**Healix** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by artificial intelligence (Google Gemini AI & Local LLM), Healix provides real-time medical insights, medication safety tracking, report analysis, nutrition scanning, doctor discovery, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
+**Healix App** is a comprehensive, next-generation smart healthcare mobile application designed to simplify personal health management. Powered by **Groq / Grok AI**, Healix App provides real-time medical insights, medication safety tracking, report analysis, nutrition scanning, doctor discovery, and emergency assistance—all with full multilingual (Arabic & English) and theme customization support.
 
 ---
 
 ## 🌟 Key Features
 
 ### 💬 1. Helix AI Medical Assistant
-- Intelligent chatbot providing instant guidance on health inquiries and symptoms.
+- Intelligent medical chatbot powered by **Groq / Grok AI** providing instant guidance on health inquiries and symptoms.
 - Context-aware responses with safety disclaimers and medical recommendations.
 - Interactive and localized conversational interface.
 
 ### 📋 2. Medical Report & Prescription Scanner
 - Scan or upload lab test results, radiology reports, or doctor prescriptions.
-- Extracts complex medical terms and provides easy-to-understand explanations.
+- Powered by **Groq AI Vision** to extract complex medical terms and provide easy-to-understand explanations.
 - Highlights abnormal indicators and offers actionable health advice.
 
 ### 🥗 3. Meal & Nutrition AI Analyzer
@@ -33,7 +33,7 @@
 
 ### ⏰ 6. Medication Reminders & Alarm Alerts
 - Schedule daily or custom recurring medication reminders.
-- Custom alarm overlay with audio notifications (`assets/sounds/alarm.mp3`) ensuring dosages are never missed.
+- Custom alarm overlay with audio notifications (`assets/sounds/alarm.wav`) ensuring dosages are never missed.
 - Local notification triggers.
 
 ### 🚨 7. Emergency SOS
@@ -52,7 +52,7 @@
 ```
 Healix App
  ├── Frontend (Mobile App - React Native & Expo Router)
- └── Backend API (Node.js & Express - Gemini AI & Local LLMs)
+ └── Backend API (Node.js & Express - Groq / Grok AI API)
 ```
 
 | Layer | Technology |
@@ -60,7 +60,7 @@ Healix App
 | **Mobile Frontend** | React Native, Expo (~54.0), TypeScript, Expo Router |
 | **UI & Styling** | Custom Design System, React Native Reanimated, Expo Vector Icons |
 | **Backend Framework** | Node.js, Express.js (ES Modules) |
-| **AI Integration** | Google Gemini Generative AI SDK (`@google/generative-ai`), Ollama / Local LLMs, Hugging Face |
+| **AI Integration** | **Groq / Grok AI API** (`GROQ_API_KEY` - Llama & Vision Models) |
 | **Database & Auth** | Firebase Authentication & Firestore (`lib/firebase.ts`) |
 | **Localization & State** | `i18n-js`, React Context API (`ThemeContext`), AsyncStorage |
 
@@ -84,10 +84,9 @@ Healix App/
 │   └── _layout.tsx             # Root Provider & Navigation Stack
 ├── backend/                    # Node.js Express REST API Backend
 │   ├── server.js               # Express Server & Route Handlers
-│   ├── ai-service.js           # Gemini AI Integration Service
-│   ├── chat-service.js         # Chatbot Engine Service
-│   ├── report-analysis-service.js # Report Processing Service
-│   └── local-llm-service.js    # Local LLM / Ollama Fallback Service
+│   ├── ai-service.js           # Groq AI Service & Drug Alias Matching
+│   ├── chat-service.js         # Groq Chatbot Engine Service
+│   └── report-analysis-service.js # Groq Vision Medical Report Service
 ├── components/                 # Reusable Components (AlarmOverlay, Switchers, etc.)
 ├── constants/                  # Colors, Design Tokens & Doctor Specialties Data
 ├── lib/                        # Services, Storage, Theme & i18n Configuration
@@ -121,8 +120,7 @@ Healix App/
 3. Create a `.env` file in the `backend/` directory:
    ```env
    PORT=5000
-   GEMINI_API_KEY=your_google_gemini_api_key_here
-   LOCAL_LLM_URL=http://localhost:11434
+   GROQ_API_KEY=your_groq_api_key_here
    ```
 
 4. Start the backend server:
@@ -162,4 +160,4 @@ This project is licensed under the MIT License.
 
 ---
 
-<p align="center">Made with ❤️ for better health and smart healthcare management.</p>
+<p align="center">Made with ❤️ for better health and smart healthcare management with Healix App.</p>
